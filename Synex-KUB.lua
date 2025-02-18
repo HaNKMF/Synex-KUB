@@ -63,24 +63,29 @@ do
     })
 
 
+local AutoStatsEnabled = false
 
-local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Default = false }
-while true do
-    local stats = {"Melee", "Defense", "Sword", "DevilFruit", "Special"} -- เพิ่มค่าที่ต้องการอัพเกรด
-    
-    for _, stat in ipairs(stats) do
-        local args = {
-            [1] = "UpStats",
-            [2] = stat,
-            [3] = 100 -- ปรับค่าการอัพเกรดต่อครั้ง
-        }
-        
-        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("System"):FireServer(unpack(args))
+local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Default = false })
+    Toggle:OnChanged(function(Value)
+        AutoStatsEnabled = Value
+        if AutoStatsEnabled then
+            task.spawn(function()
+                while AutoStatsEnabled do
+                    local stats = {"Melee", "Defense", "Sword", "DevilFruit", "Special"} -- เพิ่มค่าที่ต้องการอัพเกรด 
+                    for _, stat in ipairs(stats) do
+                        local args = {
+                            [1] = "UpStats",
+                            [2] = stat,
+                            [3] = 100 -- ปรับค่าการอัพเกรดต่อครั้ง
+                        }   
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("System"):FireServer(unpack(args))
+                    end
+                wait(0.01) -- ลดเวลาหน่วงให้น้อยลงเพื่อความรวดเร็วในการอัพเกรด
+            end
+        end)
     end
+end)
     
-    wait(0.01) -- ปรับเวลาตามต้องการ
-end
-)
 
 
     
