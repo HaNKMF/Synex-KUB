@@ -66,20 +66,6 @@ do
 
 local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Default = false })
 
-Toggle:OnChanged(function()
-end
-
-while true do
-    for _, stat in ipairs(statsToUpgrade) do
-        upgradeStat(stat)
-    end
-    wait(delayTime) -- รอเพื่อไม่ให้เซิร์ฟเวอร์ overload
-end 
-        print("Toggle changed:", Options.MyToggle.Value)
-    end)
-
-    Options.MyToggle:SetValue(false)
-
 
     
     local Slider = Tabs.Main:AddSlider("Slider", {
