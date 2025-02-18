@@ -64,7 +64,7 @@ do
 
 
 local AutoStatsEnabled = false
-local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Default = false })
+local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "Auto Stats(All)", Default = false , Description = "Very important button",})
     Toggle:OnChanged(function(Value)
     AutoStatsEnabled = Value
         if AutoStatsEnabled then
