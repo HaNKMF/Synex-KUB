@@ -14,7 +14,7 @@ local Window = Fluent:CreateWindow({
 
 --Fluent provides Lucide Icons https://lucide.dev/icons/ for the tabs, icons are optional
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "" }),
+    Main = Window:AddTab({ Title = "Main", Icon = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFpcnBsYXkiPjxwYXRoIGQ9Ik01IDE3SDRhMiAyIDAgMCAxLTItMlY1YTIgMiAwIDAgMSAyLTJoMTZhMiAyIDAgMCAxIDIgMnYxMGEyIDIgMCAwIDEtMiAyaC0xIi8+PHBhdGggZD0ibTEyIDE1IDUgNkg3WiIvPjwvc3ZnPg==" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -87,131 +87,61 @@ local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Defau
 end)
     
 
-local Dropdown = Tabs.Main:AddDropdown("Dropdown", {
-    Title = "Dropdown",
-    Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
-    Multi = false,
-    Default = 1,
+
+local Keybind = Tabs.Main:AddKeybind("Keybind", {
+    Title = "KeyBind",
+    Mode = "Toggle", -- Always, Toggle, Hold
+    Default = "LeftControl", -- String as the name of the keybind (MB1, MB2 for mouse buttons)
+
+    -- Occurs when the keybind is clicked, Value is `true`/`false`
+    Callback = function(Value)
+        print("Keybind clicked!", Value)
+end,
+
+ -- Occurs when the keybind itself is changed, `New` is a KeyCode Enum OR a UserInputType Enum
+    ChangedCallback = function(New)
+        print("Keybind changed!", New)
+    end
 })
 
-Dropdown:SetValue("four")
-
-Dropdown:OnChanged(function(Value)
-    print("Dropdown changed:", Value)
+-- OnClick is only fired when you press the keybind and the mode is Toggle
+-- Otherwise, you will have to use Keybind:GetState()
+Keybind:OnClick(function()
+    print("Keybind clicked:", Keybind:GetState())
 end)
 
-
-    
-    local MultiDropdown = Tabs.Main:AddDropdown("MultiDropdown", {
-        Title = "Dropdown",
-        Description = "You can select multiple values.",
-        Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
-        Multi = true,
-        Default = {"seven", "twelve"},
-    })
-
-    MultiDropdown:SetValue({
-        three = true,
-        five = true,
-        seven = false
-    })
-
-    MultiDropdown:OnChanged(function(Value)
-        local Values = {}
-        for Value, State in next, Value do
-            table.insert(Values, Value)
-        end
-        print("Mutlidropdown changed:", table.concat(Values, ", "))
-    end)
-
-
-
-    local Colorpicker = Tabs.Main:AddColorpicker("Colorpicker", {
-        Title = "Colorpicker",
-        Default = Color3.fromRGB(96, 205, 255)
-    })
-
-    Colorpicker:OnChanged(function()
-        print("Colorpicker changed:", Colorpicker.Value)
-    end)
-    
-    Colorpicker:SetValueRGB(Color3.fromRGB(0, 255, 140))
-
-
-
-    local TColorpicker = Tabs.Main:AddColorpicker("TransparencyColorpicker", {
-        Title = "Colorpicker",
-        Description = "but you can change the transparency.",
-        Transparency = 0,
-        Default = Color3.fromRGB(96, 205, 255)
-    })
-
-    TColorpicker:OnChanged(function()
-        print(
-            "TColorpicker changed:", TColorpicker.Value,
-            "Transparency:", TColorpicker.Transparency
-        )
-    end)
-
-
-
-    local Keybind = Tabs.Main:AddKeybind("Keybind", {
-        Title = "KeyBind",
-        Mode = "Toggle", -- Always, Toggle, Hold
-        Default = "LeftControl", -- String as the name of the keybind (MB1, MB2 for mouse buttons)
-
-        -- Occurs when the keybind is clicked, Value is `true`/`false`
-        Callback = function(Value)
-            print("Keybind clicked!", Value)
-        end,
-
-        -- Occurs when the keybind itself is changed, `New` is a KeyCode Enum OR a UserInputType Enum
-        ChangedCallback = function(New)
-            print("Keybind changed!", New)
-        end
-    })
-
-    -- OnClick is only fired when you press the keybind and the mode is Toggle
-    -- Otherwise, you will have to use Keybind:GetState()
-    Keybind:OnClick(function()
-        print("Keybind clicked:", Keybind:GetState())
-    end)
-
-    Keybind:OnChanged(function()
-        print("Keybind changed:", Keybind.Value)
-    end)
-
+Keybind:OnChanged(function()
+    print("Keybind changed:", Keybind.Value)
+end)
     task.spawn(function()
         while true do
             wait(1)
-
             -- example for checking if a keybind is being pressed
             local state = Keybind:GetState()
             if state then
                 print("Keybind is being held down")
             end
+        if Fluent.Unloaded then break end
+    end
+end)
 
-            if Fluent.Unloaded then break end
-        end
-    end)
-
-    Keybind:SetValue("MB2", "Toggle") -- Sets keybind to MB2, mode to Hold
+Keybind:SetValue("MB2", "Toggle") -- Sets keybind to MB2, mode to Hold
 
 
-    local Input = Tabs.Main:AddInput("Input", {
-        Title = "Input",
-        Default = "Default",
-        Placeholder = "Placeholder",
-        Numeric = false, -- Only allows numbers
-        Finished = false, -- Only calls callback when you press enter
-        Callback = function(Value)
-            print("Input changed:", Value)
-        end
-    })
+local Input = Tabs.Main:AddInput("Input", {
+    Title = "Input",
+    Default = "Default",
+    Placeholder = "Placeholder",
+    Numeric = false, -- Only allows numbers
+    Finished = false, -- Only calls callback when you press enter
+    Callback = function(Value)
+        print("Input changed:", Value)
+    end
+})
 
-    Input:OnChanged(function()
-        print("Input updated:", Input.Value)
-    end)
+Input:OnChanged(function()
+    print("Input updated:", Input.Value)
+   end)
 end
 
 
