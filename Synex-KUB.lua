@@ -64,9 +64,29 @@ do
 
 
 
-    local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoFarm", Default = false })
+local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Default = false })
 
-    Toggle:OnChanged(function()
+Toggle:OnChanged(function()
+    while true do
+        local stats = {"Melee", "Defense", "Sword", "DevilFruit", "Special"} -- เพิ่มค่าที่ต้องการอัพเกรด     
+        for _, stat in ipairs(stats) do
+            local args = {
+                [1] = "UpStats",
+                [2] = stat,
+                [3] = 100 -- ปรับค่าการอัพเกรดต่อครั้ง
+            } 
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("System"):FireServer(unpack(args))
+        end     
+        wait(0.01) -- ปรับเวลาตามต้องการ
+    end
+end
+
+while true do
+    for _, stat in ipairs(statsToUpgrade) do
+        upgradeStat(stat)
+    end
+    wait(delayTime) -- รอเพื่อไม่ให้เซิร์ฟเวอร์ overload
+end 
         print("Toggle changed:", Options.MyToggle.Value)
     end)
 
