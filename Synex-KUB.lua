@@ -86,38 +86,19 @@ local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "AutoStats (All)", Defau
     end
 end)
     
-    local Slider = Tabs.Main:AddSlider("Slider", {
-        Title = "Slider",
-        Description = "This is a slider",
-        Default = 2,
-        Min = 0,
-        Max = 5,
-        Rounding = 1,
-        Callback = function(Value)
-            print("Slider was changed:", Value)
-        end
-    })
 
-    Slider:OnChanged(function(Value)
-        print("Slider changed:", Value)
-    end)
+local Dropdown = Tabs.Main:AddDropdown("Dropdown", {
+    Title = "Dropdown",
+    Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
+    Multi = false,
+    Default = 1,
+})
 
-    Slider:SetValue(3)
+Dropdown:SetValue("four")
 
-
-
-    local Dropdown = Tabs.Main:AddDropdown("Dropdown", {
-        Title = "Dropdown",
-        Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
-        Multi = false,
-        Default = 1,
-    })
-
-    Dropdown:SetValue("four")
-
-    Dropdown:OnChanged(function(Value)
-        print("Dropdown changed:", Value)
-    end)
+Dropdown:OnChanged(function(Value)
+    print("Dropdown changed:", Value)
+end)
 
 
     
@@ -262,7 +243,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 Window:SelectTab(1)
 
 Fluent:Notify({
-    Title = "Fluent",
+    Title = "SynexHUB",
     Content = "The script has been loaded.",
     Duration = 8
 })
