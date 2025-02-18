@@ -14,7 +14,7 @@ local Window = Fluent:CreateWindow({
 
 --Fluent provides Lucide Icons https://lucide.dev/icons/ for the tabs, icons are optional
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "House" }),
+    Main = Window:AddTab({ Title = "Main", Icon = "<House color="#ffffff" />" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
