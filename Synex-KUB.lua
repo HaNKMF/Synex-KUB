@@ -1,103 +1,107 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+local httpService = game:GetService("HttpService")
 
-local Window = Fluent:CreateWindow({
-    Title = "Fisch | SynexHUB ",
-    SubTitle = "by xJONATHANw",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true, -- The blur may be detectable, setting this to false disables blur entirely
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl -- Used when theres no MinimizeKeybind
-})
+local SaveManager = {}
+SaveManager.Folder = "FluentSettings"
+SaveManager.Ignore = {}
+SaveManager.Options = {}
+SaveManager.Parser = {}
+SaveManager.Assets = {}  -- รองรับ Asset เช่น GUI หรือ Model
 
---Fluent provides Lucide Icons https://lucide.dev/icons/ for the tabs, icons are optional
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "House" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
-}
+-- ฟังก์ชันสำหรับเพิ่มประเภท Object ใหม่ในการเซฟ
+function SaveManager:RegisterParser(Type, SaveFunc, LoadFunc)
+    self.Parser[Type] = { Save = SaveFunc, Load = LoadFunc }
+end
 
-local Options = Fluent.Options
+-- ตั้งค่าที่ต้องการ Ignore
+function SaveManager:SetIgnoreIndexes(list)
+    for _, key in pairs(list) do
+        self.Ignore[key] = true
+    end
+end
 
-do
-    Fluent:Notify({
-        Title = "Notification",
-        Content = "This is a notification",
-        SubContent = "SubContent", -- Optional
-        Duration = 5 -- Set to nil to make the notification not disappear
-    })
+-- ตั้งค่าโฟลเดอร์
+function SaveManager:SetFolder(folder)
+    self.Folder = folder
+    self:BuildFolderTree()
+end
 
+-- สร้างโฟลเดอร์ตามโครงสร้าง
+function SaveManager:BuildFolderTree()
+    local paths = { self.Folder, self.Folder .. "/settings", self.Folder .. "/assets" }
+    for _, path in ipairs(paths) do
+        if not isfolder(path) then makefolder(path) end
+    end
+end
 
-local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "Auto Farm", Default = false })
-    Toggle:OnChanged(function(Value)
-        local function autoFish()
-            while task.wait(1) do  -- ใช้เวลารอที่ 1 วินาทีระหว่างการตกปลา (เร็วขึ้น)
-                if character and krakenRod then
-                    -- ส่งคำสั่งตกปลา
-                    local args = { 57.2, 1 }
-                    krakenRod.events.cast:FireServer(unpack(args))
-                    
-                    task.wait(0.5)  -- รอ 1 วินาทีระหว่างการตกปลาให้เร็วขึ้น
-        
-                    -- ส่งคำสั่งให้ตกปลาสำเร็จ
-                    local finishArgs = { 100, true }
-                    game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("reelfinished"):FireServer(unpack(finishArgs))
-                else
-                    print("Kraken Rod หรือ Character หายไป หยุดการตกปลา")
-                    break  -- ออกจากลูปหากไม่มีตัวละครหรือเบ็ดตกปลา
-                end
-            end
-        end    
--- เริ่มการตกปลาอัตโนมัติ
-autoFish()
+-- ฟังก์ชันบันทึกค่า
+function SaveManager:Save(name)
+    if not name or name == "" then return false, "Invalid file name" end
+    local filePath = string.format("%s/settings/%s.json", self.Folder, name)
+    local data = { objects = {} }
     
-local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "Auto Farm", Default = false })
-    Toggle:OnChanged(function(Value)
-    local player = game:GetService("Players").LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart") -- หา HumanoidRootPart
-        
-    -- กำหนดตำแหน่งใหม่
-    local newPosition = CFrame.new(-4291.22803, -948.522034, 2076.08667, 1, 0, 0, 0, 1, 0, 0, 0, 1)
-        
--- ย้ายตัวละครไปยังตำแหน่งใหม่
-hrp.CFrame = newPosition
+    for idx, option in pairs(self.Options) do
+        if self.Ignore[idx] or not self.Parser[option.Type] then continue end
+        table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
+    end
+    
+    local success, encoded = pcall(httpService.JSONEncode, httpService, data)
+    if not success then return false, "Encoding error" end
+    writefile(filePath, encoded)
+    return true
+end
 
+-- ฟังก์ชันโหลดค่า
+function SaveManager:Load(name)
+    if not name or name == "" then return false, "Invalid file name" end
+    local filePath = string.format("%s/settings/%s.json", self.Folder, name)
+    if not isfile(filePath) then return false, "File not found" end
+    
+    local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(filePath))
+    if not success then return false, "Decoding error" end
+    
+    for _, obj in ipairs(decoded.objects) do
+        if self.Parser[obj.type] then
+            task.spawn(function() self.Parser[obj.type].Load(obj.idx, obj) end)
+        end
+    end
+    return true
+end
 
--- Addons:
--- SaveManager (Allows you to have a configuration system)
--- InterfaceManager (Allows you to have a interface managment system)
+-- ฟังก์ชันจัดการ Asset
+function SaveManager:SaveAsset(name, data)
+    local filePath = string.format("%s/assets/%s.json", self.Folder, name)
+    writefile(filePath, httpService:JSONEncode(data))
+end
 
--- Hand the library over to our managers
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
+function SaveManager:LoadAsset(name)
+    local filePath = string.format("%s/assets/%s.json", self.Folder, name)
+    if isfile(filePath) then
+        local success, data = pcall(httpService.JSONDecode, httpService, readfile(filePath))
+        if success then return data end
+    end
+    return nil
+end
 
--- Ignore keys that are used by ThemeManager.
--- (we dont want configs to save themes, do we?)
-SaveManager:IgnoreThemeSettings()
+-- ฟังก์ชันรีเฟรชรายการ Config
+function SaveManager:RefreshConfigList()
+    local files = listfiles(self.Folder .. "/settings")
+    local configs = {}
+    for _, file in ipairs(files) do
+        if file:match(".json$") then
+            table.insert(configs, file:match("([^/]+).json$"))
+        end
+    end
+    return configs
+end
 
--- You can add indexes of elements the save manager should ignore
-SaveManager:SetIgnoreIndexes({})
+-- ฟังก์ชันโหลด Auto Load Config
+function SaveManager:LoadAutoloadConfig()
+    local autoPath = string.format("%s/settings/autoload.txt", self.Folder)
+    if isfile(autoPath) then
+        local name = readfile(autoPath)
+        return self:Load(name)
+    end
+    return false
+end
 
--- use case for doing it this way:
--- a script hub could have themes in a global folder
--- and game configs in a separate folder per game
-InterfaceManager:SetFolder("FluentScriptHub")
-SaveManager:SetFolder("FluentScriptHub/specific-game")
-
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
-
-
-Window:SelectTab(1)
-
-Fluent:Notify({
-    Title = "SynexHUB",
-    Content = "The script has been loaded.",
-    Duration = 8
-})
-
--- You can use the SaveManager:LoadAutoloadConfig() to load a config
--- which has been marked to be one that auto loads!
-SaveManager:LoadAutoloadConfig()
+return SaveManager
